@@ -1,4 +1,4 @@
-import { joinCommandArgs, wrapCommand } from './util'
+import { joinCommandArgs, wrapCommand } from 'ssh-pool/lib/commands/util'
 
 function wrapCwd(cwd, command) {
   return `cd ${cwd} > /dev/null; ${command}; cd - > /dev/null`

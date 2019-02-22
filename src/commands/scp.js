@@ -1,4 +1,4 @@
-import { joinCommandArgs, requireArgs } from './util'
+import { joinCommandArgs, wrapCommand } from 'ssh-pool/lib/commands/util'
 
 export function formatScpCommand({ port, key, proxy, forwardAgent, src, dest }) {
   requireArgs(['src', 'dest'], { src, dest }, 'scp')

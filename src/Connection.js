@@ -2,15 +2,15 @@ import path from 'path'
 import {Connection  as OriginalConnection } from "ssh-pool"
 
 import { tmpName as asyncTmpName } from 'tmp'
-import { formatRsyncCommand, isRsyncSupported } from 'ssh-pool/commands/rsync'
-import { formatTarCommand } from 'ssh-pool/commands/tar'
-import { formatCdCommand } from 'ssh-pool/commands/cd'
-import { formatMkdirCommand } from 'ssh-pool/commands/mkdir'
-import { formatRawCommand } from 'ssh-pool/commands/raw'
-import { formatRmCommand } from 'ssh-pool/commands/rm'
-import { joinCommandArgs } from 'ssh-pool/commands/util'
-import { parseRemote, formatRemote } from 'ssh-pool/remote'
-import { exec, series, deprecateV3, deprecateV5 } from 'ssh-pool/util'
+import { formatRsyncCommand, isRsyncSupported } from 'ssh-pool/lib/commands/rsync'
+import { formatTarCommand } from 'ssh-pool/lib/commands/tar'
+import { formatCdCommand } from 'ssh-pool/lib/commands/cd'
+import { formatMkdirCommand } from 'ssh-pool/lib/commands/mkdir'
+import { formatRawCommand } from 'ssh-pool/lib/commands/raw'
+import { formatRmCommand } from 'ssh-pool/lib/commands/rm'
+import { joinCommandArgs } from 'ssh-pool/lib/commands/util'
+import { parseRemote, formatRemote } from 'ssh-pool/lib/remote'
+import { exec, series, deprecateV3, deprecateV5 } from 'ssh-pool/lib/util'
 
 
 import { formatSshCommand } from './commands/ssh'
@@ -64,8 +64,18 @@ class Connection extends  OriginalConnection{
    * @param {number} [options.verbosityLevel] The SSH verbosity level: 0 (none), 1 (-v), 2 (-vv), 3+ (-vvv)
    */
   constructor(options = {}) {
-    super(options);
+     super(options);
   }
+  /**
+   * Copy data from a standard connection to the proxy connection
+   * @param {Connection} ssh-pool Connection
+   * @returns {null}
+   */
+  setFromOriginalConnection(originalConnection) {
+	  this.options = originalConnection.options;
+	  this.remote = originalConnection.remote;
+  }
+  
 
   /**
    * Run a command remotely using SSH.
@@ -86,6 +96,7 @@ class Connection extends  OriginalConnection{
     }
     this.log('Running "%s" on host "%s".', command, this.remote.host)
     const cmd = this.buildSSHCommand(command, { tty, cwd ,proxy, forwardAgent})
+	  this.log(`Cmd is ${cmd}`);
     return this.runLocally(cmd, cmdOptions)
   }
 
