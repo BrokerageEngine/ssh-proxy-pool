@@ -11,6 +11,7 @@ export function formatSshCommand({
   tty,
   remote,
   proxy,
+  forwardAgent,
   cwd,
   command,
   verbosityLevel,
@@ -31,6 +32,9 @@ export function formatSshCommand({
     args = [...args, '-o', `ProxyCommand='${proxy}'`]
   if (strict !== undefined)
     args = [...args, '-o', `StrictHostKeyChecking=${strict}`]
+  if (forwardAgent !== undefined)
+    args = [...args, '-o', `ForwardAgent=${forwardAgent}`]
+
   if (remote) args = [...args, remote]
 
   const cwdCommand = cwd ? wrapCwd(cwd, command) : command

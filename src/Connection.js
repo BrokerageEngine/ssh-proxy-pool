@@ -78,14 +78,14 @@ class Connection {
    * @returns {ExecResult}
    * @throws {ExecError}
    */
-  async run(command, { tty: ttyOption, cwd,proxy, ...cmdOptions } = {}) {
+  async run(command, { tty: ttyOption, cwd,proxy, forwardAgent,  ...cmdOptions } = {}) {
     let tty = ttyOption
     if (command.startsWith('sudo') && typeof ttyOption === 'undefined') {
       deprecateV3('You should set "tty" option explictly when you use "sudo".')
       tty = true
     }
     this.log('Running "%s" on host "%s".', command, this.remote.host)
-    const cmd = this.buildSSHCommand(command, { tty, cwd ,proxy})
+    const cmd = this.buildSSHCommand(command, { tty, cwd ,proxy, forwardAgent})
     return this.runLocally(cmd, cmdOptions)
   }
 
@@ -163,7 +163,7 @@ class Connection {
    * @returns {ExecResult}
    * @throws {ExecError}
    */
-  async scpCopyToRemote(src, dest, { ignores, proxy,...cmdOptions } = {}) {
+  async scpCopyToRemote(src, dest, { ignores, proxy, forwardAgent,...cmdOptions } = {}) {
     const archive = path.basename(await tmpName({ postfix: '.tar.gz' }))
     const srcDir = path.dirname(src)
     const remoteDest = `${formatRemote(this.remote)}:${dest}`
@@ -189,6 +189,7 @@ class Connection {
         port: this.remote.port,
         key: this.options.key,
         proxy,
+        forwardAgent,
         src: archive,
         dest: remoteDest,
       }),
@@ -235,7 +236,7 @@ class Connection {
    * @returns {MultipleExecResult}
    * @throws {ExecError}
    */
-  async scpCopyFromRemote(src, dest, { ignores,proxy, ...cmdOptions } = {}) {
+  async scpCopyFromRemote(src, dest, { ignores,proxy, forwardAgent, ...cmdOptions } = {}) {
     const archive = path.basename(await tmpName({ postfix: '.tar.gz' }))
     const srcDir = path.dirname(src)
     const srcArchive = path.join(srcDir, archive)
@@ -259,6 +260,7 @@ class Connection {
       port: this.remote.port,
       key: this.options.key,
       proxy,
+      forwardAgent,
       src: remoteSrcArchive,
       dest,
     })
@@ -306,6 +308,7 @@ class Connection {
       strict: this.options.strict,
       tty: this.options.tty,
       proxy: this.options.proxy,
+      forwardAgent: this.options.forwardAgent,
       verbosityLevel: this.options.verbosityLevel,
       remote: formatRemote(this.remote),
       command: formatRawCommand({ command, asUser: this.options.asUser }),
@@ -335,6 +338,7 @@ class Connection {
       strict: this.options.strict,
       tty: this.options.tty,
       proxy: this.options.proxy,
+      forwardAgent: this.options.forwardAgent
     })
 
     const cmd = formatRsyncCommand({

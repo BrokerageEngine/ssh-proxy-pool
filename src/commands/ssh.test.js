@@ -32,6 +32,20 @@ describe('ssh', () => {
       )
     })
 
+    it('should support forwardAgent', () => {
+      expect(formatSshCommand({ forwardAgent: true })).toBe(
+        'ssh -o ForwardAgent=true',
+      )
+      expect(formatSshCommand({ forwardAgent: false })).toBe(
+        'ssh -o ForwardAgent=false',
+      )
+      expect(formatSshCommand({ forwardAgent: 'no' })).toBe(
+        'ssh -o ForwardAgent=no',
+      )
+      expect(formatSshCommand({ forwardAgent: 'yes' })).toBe(
+        'ssh -o ForwardAgent=yes',
+      )
+    })
     it('should support remote', () => {
       expect(
         formatSshCommand({
