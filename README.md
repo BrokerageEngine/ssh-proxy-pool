@@ -1,10 +1,12 @@
-# ssh-pool
+# ssh-proxy-pool
 
-[![Build Status][build-badge]][build]
+
 [![version][version-badge]][package]
 [![MIT License][license-badge]][license]
 
-Run remote commands over a pool of server using SSH.
+Run remote commands over a pool of server using SSH.  This is a wrapper for ssh-pool. It allows you to set
+parameters for proxy and forwardAgent so that it is easier to work with bastion/jump servers between the developer
+and the deployment server.
 
 ```sh
 npm install ssh-pool
@@ -13,7 +15,7 @@ npm install ssh-pool
 ## Usage
 
 ```js
-import { ConnectionPool } from 'ssh-pool'
+import { ProxyConnectionPool } from 'ssh-proxy-pool'
 
 const pool = new ConnectionPool(['user@server1', 'user@server2'])
 
@@ -36,6 +38,8 @@ Create a new connection to run command on a remote server.
 @param {Stream} [options.stdout] Stdout stream
 @param {Stream} [options.stderr] Stderr stream
 @param {string} [options.key] SSH key
+* @param {string} [options.proxy] Add a ProxyCommand to the scp command.
+* @param {string} [options.forwardAgent] Add a ForwardAgent to the scp command
 @param {function} [options.log] Log method
 @param {boolean} [options.asUser] Use a custom user to run command
 @param {number} [options.verbosityLevel] SSH verbosity level: 0 (none), 1 (-v), 2 (-vv), 3+ (-vvv)
@@ -87,6 +91,8 @@ Run a command on the remote server, you can specify custom `childProcess.exec` o
 @param {string} command Command to run
 @param {object} [options] Options
 @param {boolean} [options.tty] Force a TTY allocation.
+* @param {string} [options.proxy] Add a ProxyCommand to the scp command.
+* @param {string} [options.forwardAgent] Add a ForwardAgent to the scp command
 @returns {ExecResult}
 @throws {ExecError}
 ```
@@ -109,6 +115,8 @@ Copy a file or a directory from local to a remote server, you can specify custom
 * @param {string} dest Destination
 * @param {object} [options] Options
 * @param {string[]} [options.ignores] Specify a list of files to ignore.
+* @param {string} [options.proxy] Add a ProxyCommand to the scp command.
+* @param {string} [options.forwardAgent] Add a ForwardAgent to the scp command
 * @param {string[]|string} [options.rsync] Specify a set of rsync arguments.
 * @returns {ExecResult}
 * @throws {ExecError}
@@ -195,9 +203,8 @@ exec('echo "hello"')
 
 MIT
 
-[build-badge]: https://img.shields.io/travis/shipitjs/shipit.svg?style=flat-square
-[build]: https://travis-ci.org/shipitjs/shipit
-[version-badge]: https://img.shields.io/npm/v/ssh-pool.svg?style=flat-square
-[package]: https://www.npmjs.com/package/ssh-pool
+
+[version-badge]: https://img.shields.io/npm/v/ssh-proxy-pool.svg?style=flat-square
+[package]: https://www.npmjs.com/package/ssh-proxy-pool
 [license-badge]: https://img.shields.io/npm/l/ssh-pool.svg?style=flat-square
-[license]: https://github.com/shipitjs/shipit/blob/master/LICENSE
+[license]: https://github.com/BrokerageEngine/ssh-proxy-pool/blob/master/LICENSE

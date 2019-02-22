@@ -1,9 +1,9 @@
 import Connection from './Connection'
-import ConnectionPool from './ConnectionPool'
+import ProxyConnectionPool from './ProxyConnectionPool'
 import { exec } from './util'
 import { isRsyncSupported } from './commands/rsync'
 
 exports.Connection = Connection
-exports.ConnectionPool = ConnectionPool
+exports.ProxyConnectionPool = ProxyConnectionPool
 exports.exec = exec
 exports.isRsyncSupported = isRsyncSupported

@@ -1,7 +1,7 @@
 /* eslint-disable func-names */
 import Connection from './Connection'
 
-class ConnectionPool {
+class ProxyConnectionPool {
   /**
    * Initialize a new `ConnectionPool` with `connections`.
    * All Connection options are also supported.
@@ -25,11 +25,11 @@ class ConnectionPool {
   'scpCopyToRemote',
   'scpCopyFromRemote',
 ].forEach(method => {
-  ConnectionPool.prototype[method] = function(...args) {
+  ProxyConnectionPool.prototype[method] = function(...args) {
     return Promise.all(
       this.connections.map(connection => connection[method](...args)),
     )
   }
 })
 
-export default ConnectionPool
+export default ProxyConnectionPool

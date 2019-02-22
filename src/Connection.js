@@ -1,18 +1,20 @@
 import path from 'path'
-import LineWrapper from 'stream-line-wrapper'
-import { tmpName as asyncTmpName } from 'tmp'
-import { formatRsyncCommand, isRsyncSupported } from './commands/rsync'
-import { formatSshCommand } from './commands/ssh'
-import { formatTarCommand } from './commands/tar'
-import { formatCdCommand } from './commands/cd'
-import { formatMkdirCommand } from './commands/mkdir'
-import { formatScpCommand } from './commands/scp'
-import { formatRawCommand } from './commands/raw'
-import { formatRmCommand } from './commands/rm'
-import { joinCommandArgs } from './commands/util'
-import { parseRemote, formatRemote } from './remote'
-import { exec, series, deprecateV3, deprecateV5 } from './util'
+import {Connection  as OriginalConnection } from "ssh-pool"
 
+import { tmpName as asyncTmpName } from 'tmp'
+import { formatRsyncCommand, isRsyncSupported } from 'ssh-pool/commands/rsync'
+import { formatTarCommand } from 'ssh-pool/commands/tar'
+import { formatCdCommand } from 'ssh-pool/commands/cd'
+import { formatMkdirCommand } from 'ssh-pool/commands/mkdir'
+import { formatRawCommand } from 'ssh-pool/commands/raw'
+import { formatRmCommand } from 'ssh-pool/commands/rm'
+import { joinCommandArgs } from 'ssh-pool/commands/util'
+import { parseRemote, formatRemote } from 'ssh-pool/remote'
+import { exec, series, deprecateV3, deprecateV5 } from 'ssh-pool/util'
+
+
+import { formatSshCommand } from './commands/ssh'
+import { formatScpCommand } from './commands/scp'
 const tmpName = async options =>
   new Promise((resolve, reject) =>
     asyncTmpName(options, (err, name) => {
@@ -48,7 +50,7 @@ const tmpName = async options =>
 /**
  * Materialize a connection to a remote server.
  */
-class Connection {
+class Connection extends  OriginalConnection{
   /**
    * Initialize a new `Connection` with `options`.
    *
@@ -62,9 +64,7 @@ class Connection {
    * @param {number} [options.verbosityLevel] The SSH verbosity level: 0 (none), 1 (-v), 2 (-vv), 3+ (-vvv)
    */
   constructor(options = {}) {
-    this.options = options
-    this.remote = parseRemote(options.remote)
-    this.remote.user = this.remote.user || 'deploy'
+    super(options);
   }
 
   /**
@@ -89,66 +89,9 @@ class Connection {
     return this.runLocally(cmd, cmdOptions)
   }
 
-  /**
-   * Run a copy command using either rsync or scp.
-   * All exec options are also available.
-   *
-   * @see https://nodejs.org/dist/latest-v8.x/docs/api/child_process.html#child_process_child_process_exec_command_options_callback
-   * @deprecated
-   * @param {string} src Source
-   * @param {string} dest Destination
-   * @param {object} [options] Options
-   * @param {boolean} [options.direction] Specify "remoteToLocal" to copy from "remote". By default it will copy from remote.
-   * @param {string[]} [options.ignores] Specify a list of files to ignore.
-   * @param {string[]|string} [options.rsync] Specify a set of rsync arguments.
-   * @returns {ExecResult|MultipleExecResult}
-   * @throws {ExecError}
-   */
-  async copy(src, dest, { direction, ...options } = {}) {
-    deprecateV5(
-      '"copy" method is deprecated, please use "copyToRemote", "copyFromRemote", "scpCopyToRemote" or "scpCopyFromRemote".',
-    )
-    if (direction === 'remoteToLocal')
-      return this.autoCopyFromRemote(src, dest, options)
 
-    return this.autoCopyToRemote(src, dest, options)
-  }
 
-  /**
-   * Run a copy from the local to the remote using rsync.
-   * All exec options are also available.
-   *
-   * @see https://nodejs.org/dist/latest-v8.x/docs/api/child_process.html#child_process_child_process_exec_command_options_callback
-   * @param {string} src Source
-   * @param {string} dest Destination
-   * @param {object} [options] Options
-   * @param {string[]} [options.ignores] Specify a list of files to ignore.
-   * @param {string[]|string} [options.rsync] Specify a set of rsync arguments.
-   * @returns {ExecResult}
-   * @throws {ExecError}
-   */
-  async copyToRemote(src, dest, options) {
-    const remoteDest = `${formatRemote(this.remote)}:${dest}`
-    return this.rsyncCopy(src, remoteDest, options)
-  }
 
-  /**
-   * Run a copy from the remote to the local using rsync.
-   * All exec options are also available.
-   *
-   * @see https://nodejs.org/dist/latest-v8.x/docs/api/child_process.html#child_process_child_process_exec_command_options_callback
-   * @param {string} src Source
-   * @param {string} dest Destination
-   * @param {object} [options] Options
-   * @param {string[]} [options.ignores] Specify a list of files to ignore.
-   * @param {string[]|string} [options.rsync] Specify a set of rsync arguments.
-   * @returns {ExecResult}
-   * @throws {ExecError}
-   */
-  async copyFromRemote(src, dest, options) {
-    const remoteSrc = `${formatRemote(this.remote)}:${src}`
-    return this.rsyncCopy(remoteSrc, dest, options)
-  }
 
   /**
    * Run a copy from the local to the remote using scp.
@@ -352,103 +295,9 @@ class Connection {
     return this.runLocally(cmd, cmdOptions)
   }
 
-  /**
-   * Automatic copy to remote method.
-   * Choose rsync and fallback to scp if not available.
-   *
-   * @private
-   * @param {string} src
-   * @param {string} dest
-   * @param {object} options
-   * @returns {ExecResult|MultipleExecResult}
-   * @throws {ExecError}
-   */
-  async autoCopyToRemote(src, dest, options) {
-    const rsyncAvailable = await isRsyncSupported()
-    const method = rsyncAvailable ? 'copyToRemote' : 'scpCopyToRemote'
-    return this[method](src, dest, options)
-  }
 
-  /**
-   * Automatic copy from remote method.
-   * Choose rsync and fallback to scp if not available.
-   *
-   * @private
-   * @param {string} src
-   * @param {string} dest
-   * @param {object} options
-   * @returns {ExecResult|MultipleExecResult}
-   * @throws {ExecError}
-   */
-  async autoCopyFromRemote(src, dest, options) {
-    const rsyncAvailable = await isRsyncSupported()
-    const method = rsyncAvailable ? 'copyFromRemote' : 'scpCopyFromRemote'
-    return this[method](src, dest, options)
-  }
 
-  /**
-   * Aggregate some exec tasks.
-   *
-   * @private
-   * @param {Promise.<ExecResult>[]} tasks An array of tasks
-   * @returns {MultipleExecResult}
-   * @throws {ExecError}
-   */
-  async aggregate(tasks) {
-    const results = await series(tasks)
 
-    return results.reduce(
-      (aggregate, result) => ({
-        stdout: String(aggregate.stdout) + String(result.stdout),
-        stderr: String(aggregate.stderr) + String(result.stderr),
-        children: [...aggregate.children, result.child],
-      }),
-      {
-        stdout: '',
-        stderr: '',
-        children: [],
-      },
-    )
-  }
-
-  /**
-   * Log using logger.
-   *
-   * @private
-   * @param {...*} args
-   */
-  log(...args) {
-    if (this.options.log) this.options.log(...args)
-  }
-
-  /**
-   * Method used to run a command locally.
-   *
-   * @private
-   * @param {string} cmd
-   * @param {object} [options]
-   * @param {Buffer} [options.stdout] stdout buffer
-   * @param {Buffer} [options.stderr] stderr buffer
-   * @param {...object} [options.cmdOptions] Command options
-   * @returns {ExecResult}
-   * @throws {ExecError}
-   */
-  async runLocally(cmd, { stdout, stderr, ...cmdOptions } = {}) {
-    const stdoutPipe = stdout || this.options.stdout
-    const stderrPipe = stderr || this.options.stderr
-
-    return exec(cmd, cmdOptions, child => {
-      if (stdoutPipe)
-        child.stdout
-          .pipe(new LineWrapper({ prefix: `@${this.remote.host} ` }))
-          .pipe(stdoutPipe)
-
-      if (stderrPipe)
-        child.stderr
-          .pipe(new LineWrapper({ prefix: `@${this.remote.host}-err ` }))
-          .pipe(stderrPipe)
-    })
-  }
 }
 
 export default Connection
