@@ -9,7 +9,7 @@ parameters for proxy and forwardAgent so that it is easier to work with bastion/
 and the deployment server.
 
 ```sh
-npm install ssh-pool
+npm install ssh-proxy-pool
 ```
 
 ## Usage
@@ -17,7 +17,7 @@ npm install ssh-pool
 ```js
 import { ProxyConnectionPool } from 'ssh-proxy-pool'
 
-const pool = new ConnectionPool(['user@server1', 'user@server2'])
+const pool = new ProxyConnectionPool(['user@server1', 'user@server2'])
 
 async function run() {
   const results = await pool.run('hostname')
@@ -26,7 +26,7 @@ async function run() {
 }
 ```
 
-### new Connection(options)
+### new ProxyConnection(options)
 
 Create a new connection to run command on a remote server.
 
