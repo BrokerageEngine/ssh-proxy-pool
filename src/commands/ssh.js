@@ -10,7 +10,8 @@ export function formatSshCommand({
   strict,
   tty,
   remote,
-  proxy,
+  proxyUser,
+  proxyHost,
   forwardAgent,
   cwd,
   command,
@@ -28,12 +29,20 @@ export function formatSshCommand({
   if (tty) args = [...args, '-tt']
   if (port) args = [...args, '-p', port]
   if (key) args = [...args, '-i', key]
-  if (proxy)
-    args = [...args, '-o', `ProxyCommand='${proxy}'`]
+  if (proxyHost) {
+    let proxyCmd = "ssh -W %h:%p ";
+    if (proxyUser) {
+        proxyCmd += `${proxyUser}@${proxyHost}`
+    }
+    else {
+      proxyCmd += `${proxyHost}`
+    }
+    args = [...args, '-o', `ProxyCommand='${proxyCmd}'`]
+  }
   if (strict !== undefined)
     args = [...args, '-o', `StrictHostKeyChecking=${strict}`]
   if (forwardAgent !== undefined)
-    args = [...args, '-o', `ForwardAgent=${forwardAgent}`]
+    args = [...args, '-o', `ForwardAgent='${forwardAgent}'`]
 
   if (remote) args = [...args, remote]
 

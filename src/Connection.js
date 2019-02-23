@@ -76,7 +76,14 @@ class Connection extends  OriginalConnection{
 	  this.remote = originalConnection.remote;
   }
   
-
+/**
+   * Merge new options onto the existing options
+   * @param {object } [options] Options
+   * @returns {null}
+   */
+  addOptions(newOptions) {
+    this.options = Object.assign({}, this.options, newOptions);
+     }
   /**
    * Run a command remotely using SSH.
    * All exec options are also available.
@@ -88,14 +95,15 @@ class Connection extends  OriginalConnection{
    * @returns {ExecResult}
    * @throws {ExecError}
    */
-  async run(command, { tty: ttyOption, cwd,proxy, forwardAgent,  ...cmdOptions } = {}) {
+  async run(command, { tty: ttyOption, cwd,proxyHost, proxyUser, forwardAgent,  ...cmdOptions } = {}) {
     let tty = ttyOption
     if (command.startsWith('sudo') && typeof ttyOption === 'undefined') {
       deprecateV3('You should set "tty" option explictly when you use "sudo".')
       tty = true
     }
+
     this.log('Running "%s" on host "%s".', command, this.remote.host)
-    const cmd = this.buildSSHCommand(command, { tty, cwd ,proxy, forwardAgent})
+    const cmd = this.buildSSHCommand(command, { tty, cwd ,proxyHost, proxyUser, forwardAgent})
 	  return this.runLocally(cmd, cmdOptions)
   }
 
@@ -246,6 +254,7 @@ class Connection extends  OriginalConnection{
     ])
   }
 
+  
   /**
    * Build an SSH command.
    *
@@ -255,12 +264,14 @@ class Connection extends  OriginalConnection{
    * @returns {string}
    */
   buildSSHCommand(command, options) {
+    Object.keys(options).forEach(key => options[key] === undefined && delete options[key])
     return formatSshCommand({
       port: this.remote.port,
       key: this.options.key,
       strict: this.options.strict,
       tty: this.options.tty,
-      proxy: this.options.proxy,
+      proxyUser:   this.options.proxyUser,
+      proxyHost: this.options.proxyHost,
       forwardAgent: this.options.forwardAgent,
       verbosityLevel: this.options.verbosityLevel,
       remote: formatRemote(this.remote),
@@ -284,14 +295,14 @@ class Connection extends  OriginalConnection{
    */
   async rsyncCopy(src, dest, { rsync, ignores, ...cmdOptions } = {}) {
     this.log('Copy "%s" to "%s" via rsync', src, dest)
-
     const sshCommand = formatSshCommand({
       port: this.remote.port,
       key: this.options.key,
       strict: this.options.strict,
       tty: this.options.tty,
-      proxy: this.options.proxy,
-      forwardAgent: this.options.forwardAgent
+      proxyUser:   this.options.proxyUser,
+      proxyHost: this.options.proxyHost,
+      forwardAgent: this.options.forwardAgent,
     })
 
     const cmd = formatRsyncCommand({
@@ -301,7 +312,7 @@ class Connection extends  OriginalConnection{
       additionalArgs: typeof rsync === 'string' ? [rsync] : rsync,
       excludes: ignores,
     })
-
+ 
     return this.runLocally(cmd, cmdOptions)
   }
 
