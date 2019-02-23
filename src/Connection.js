@@ -96,8 +96,7 @@ class Connection extends  OriginalConnection{
     }
     this.log('Running "%s" on host "%s".', command, this.remote.host)
     const cmd = this.buildSSHCommand(command, { tty, cwd ,proxy, forwardAgent})
-	  this.log(`Cmd is ${cmd}`);
-    return this.runLocally(cmd, cmdOptions)
+	  return this.runLocally(cmd, cmdOptions)
   }
 
 

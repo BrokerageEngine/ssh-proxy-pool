@@ -14,7 +14,9 @@ class ProxyConnectionPool {
       if (connection instanceof Connection) return connection
       return new Connection({ remote: connection, ...options })
     })
+    this.isProxied = true;
   }
+
 }
 
 ;[
