@@ -38,7 +38,6 @@ class ProxyConnectionPool {
       this.connections.map(connection => conditionFunction(connection) ? connection[method](...args): null)
     )
   }
-
 })
 
 export default ProxyConnectionPool
