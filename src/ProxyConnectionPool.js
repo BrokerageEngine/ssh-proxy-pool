@@ -32,6 +32,13 @@ class ProxyConnectionPool {
       this.connections.map(connection => connection[method](...args)),
     )
   }
+
+  ProxyConnectionPool.prototype[`${method}WithCondition`] = function(conditionFunction, ...args) {
+    return Promise.all(
+      this.connections.map(connection => conditionFunction(connection) ? connection[method](...args): null)
+    )
+  }
+
 })
 
 export default ProxyConnectionPool
