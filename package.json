@@ -1,7 +1,7 @@
 {
   "name": "ssh-proxy-pool",
   "license": "MIT",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Run remote commands over a pool of server using SSH. This version allows proxies/bastions/jump servers",
   "engines": {
     "node": ">=6"
